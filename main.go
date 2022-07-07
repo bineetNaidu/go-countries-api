@@ -169,12 +169,51 @@ func getCountry(ctx *gin.Context) {
 	}
 }
 
+func addCountry(c *gin.Context) {
+	var newCountry Country
+	if err := c.BindJSON(&newCountry); err != nil {
+		return
+	}
+	countries = append(countries, newCountry)
+	c.IndentedJSON(http.StatusCreated, countries)
+}
+
+func updateCountry(ctx *gin.Context) {
+	country := ctx.Param("country")
+	for i, c := range countries {
+		if c.Code == country {
+			var newCountry Country
+			if err := ctx.BindJSON(&newCountry); err != nil {
+				return
+			}
+			countries[i] = newCountry
+			ctx.IndentedJSON(http.StatusOK, countries)
+			return
+		}
+	}
+}
+
+func removeCountry(ctx *gin.Context) {
+	country := ctx.Param("country")
+	for idx, c := range countries {
+		if c.Code == country {
+			countries = append(countries[:idx], countries[idx+1:]...)
+			ctx.IndentedJSON(http.StatusOK, countries)
+			return
+		}
+	}
+}
+
 func main() {
 
 	router := gin.Default()
 
 	router.GET("/countries", getCountries)
 	router.GET("/countries/:country", getCountry)
+	router.POST("/countries", addCountry)
+	router.PUT("/countries/:country", updateCountry)
+	router.PATCH("/countries/:country", updateCountry)
+	router.DELETE("/countries/:country", removeCountry)
 
 	err := router.Run(":8080")
 	if err != nil {
